@@ -11,7 +11,7 @@ Schulman et al. 于 2017 年提出 PPO。InstructGPT 将 PPO 用在“奖励模�
 
 ## 2. 从 policy gradient 到 PPO
 
-策略梯度希望增加高优势动作的概率、降低低优势动作的概率。若当前新策略为 `pi_theta`，采样时的旧策略为 `pi_old`，定义概率比：
+策略梯度希望增加高优势动作的概率、降低低优势动作的概率。若当前新策略为 $\pi_{\theta}$，采样时的旧策略为 $\pi_{old}$，定义概率比：
 
 $$
 r_t(\theta) =

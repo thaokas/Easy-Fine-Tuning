@@ -1,1 +1,3 @@
 .claude/
+.gitignore
+**__pycache__**

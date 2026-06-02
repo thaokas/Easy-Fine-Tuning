@@ -1,0 +1,1520 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>大模型微调技术公开课</title>
+  <style>
+    :root {
+      --bg: #101418;
+      --panel: #182027;
+      --panel-2: #202a33;
+      --text: #f4f7fb;
+      --muted: #a9b6c4;
+      --line: #344553;
+      --blue: #49a7ff;
+      --cyan: #37d7d0;
+      --green: #6bdc8f;
+      --yellow: #ffd166;
+      --red: #ff7b7b;
+      --purple: #b79cff;
+      --orange: #ffad66;
+      --shadow: 0 28px 70px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 14% 12%, rgba(73, 167, 255, 0.22), transparent 28%),
+        radial-gradient(circle at 82% 18%, rgba(55, 215, 208, 0.16), transparent 30%),
+        linear-gradient(135deg, #0c1117 0%, #101418 48%, #111a1f 100%);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .slide {
+      display: none;
+      width: min(100vw, 177.78vh);
+      height: min(56.25vw, 100vh);
+      aspect-ratio: 16 / 9;
+      position: absolute;
+      inset: 50% auto auto 50%;
+      transform: translate(-50%, -50%);
+      padding: clamp(32px, 3.75vw, 54px) clamp(40px, 4.55vw, 64px) clamp(34px, 3.3vw, 48px);
+      background:
+        linear-gradient(145deg, rgba(24, 32, 39, 0.98), rgba(13, 18, 23, 0.98)),
+        linear-gradient(90deg, rgba(73, 167, 255, 0.08), rgba(55, 215, 208, 0.05));
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .slide.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: safe center;
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 44px 44px;
+      pointer-events: none;
+      mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent 80%);
+    }
+
+    .slide > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .section-label::before {
+      content: "";
+      width: 36px;
+      height: 2px;
+      background: currentColor;
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(48px, 4.85vw, 70px);
+      line-height: 1.06;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: clamp(32px, 3.25vw, 46px);
+      line-height: 1.16;
+      letter-spacing: 0;
+      margin-bottom: clamp(16px, 1.7vw, 24px);
+    }
+
+    h3 {
+      font-size: clamp(18px, 1.65vw, 23px);
+      line-height: 1.28;
+      margin-bottom: 10px;
+    }
+
+    p, li {
+      font-size: clamp(15px, 1.45vw, 20px);
+      line-height: 1.52;
+      color: var(--muted);
+    }
+
+    strong {
+      color: var(--text);
+    }
+
+    .lead {
+      font-size: clamp(21px, 2vw, 28px);
+      line-height: 1.46;
+      color: #dce8f5;
+      max-width: 900px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .accent {
+      color: var(--cyan);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(16px, 1.7vw, 24px);
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(14px, 1.4vw, 20px);
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(12px, 1.25vw, 18px);
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: clamp(15px, 1.55vw, 22px);
+      min-height: 118px;
+      overflow-wrap: anywhere;
+    }
+
+    .card.compact {
+      padding: 16px;
+      min-height: auto;
+    }
+
+    .card h3 {
+      color: var(--text);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(73, 167, 255, 0.14);
+      color: #bfe1ff;
+      border: 1px solid rgba(73, 167, 255, 0.35);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .slide.title-slide {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .slide.title-slide.active {
+      display: flex;
+    }
+
+    .title-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 36px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .big-number {
+      font-size: 98px;
+      font-weight: 800;
+      line-height: 1;
+      color: rgba(73, 167, 255, 0.34);
+    }
+
+    .quote {
+      border-left: 4px solid var(--cyan);
+      padding: clamp(13px, 1.25vw, 18px) clamp(16px, 1.7vw, 24px);
+      background: rgba(55, 215, 208, 0.08);
+      border-radius: 0 8px 8px 0;
+      color: #dce8f5;
+      font-size: clamp(19px, 1.85vw, 25px);
+      line-height: 1.48;
+    }
+
+    .chat {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .bubble {
+      padding: 16px 18px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      font-size: 17px;
+      line-height: 1.48;
+      color: #dce8f5;
+    }
+
+    .bubble.user {
+      border-color: rgba(73, 167, 255, 0.35);
+      background: rgba(73, 167, 255, 0.1);
+    }
+
+    .bubble.bad {
+      border-color: rgba(255, 123, 123, 0.35);
+      background: rgba(255, 123, 123, 0.09);
+    }
+
+    .flow {
+      display: flex;
+      align-items: stretch;
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .flow .node {
+      flex: 1;
+      padding: 18px;
+      min-height: 108px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.055);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+    }
+
+    .arrow {
+      align-self: center;
+      color: var(--cyan);
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: clamp(10px, 1vw, 14px);
+      align-items: stretch;
+      margin-top: clamp(16px, 1.8vw, 24px);
+    }
+
+    .pipeline .step {
+      position: relative;
+      min-height: 160px;
+      padding: clamp(14px, 1.35vw, 18px) clamp(12px, 1.25vw, 16px);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.035));
+    }
+
+    .step .num {
+      color: var(--cyan);
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .matrix-demo {
+      display: grid;
+      grid-template-columns: 1.1fr 0.2fr 0.58fr 0.58fr;
+      gap: 14px;
+      align-items: center;
+      margin-top: 18px;
+    }
+
+    .matrix {
+      min-height: 168px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background:
+        linear-gradient(135deg, rgba(73, 167, 255, 0.2), rgba(55, 215, 208, 0.08)),
+        rgba(255, 255, 255, 0.04);
+      font-size: 25px;
+      font-weight: 800;
+    }
+
+    .matrix.small {
+      min-height: 168px;
+      background:
+        linear-gradient(135deg, rgba(255, 209, 102, 0.2), rgba(255, 173, 102, 0.08)),
+        rgba(255, 255, 255, 0.04);
+    }
+
+    .formula {
+      padding: clamp(13px, 1.4vw, 18px) clamp(16px, 1.7vw, 24px);
+      margin: clamp(14px, 1.4vw, 20px) 0;
+      border-radius: 8px;
+      border: 1px solid rgba(55, 215, 208, 0.28);
+      background: rgba(55, 215, 208, 0.08);
+      font-size: clamp(21px, 2.25vw, 31px);
+      text-align: center;
+      color: #ecfeff;
+      font-family: Cambria, "Times New Roman", serif;
+      overflow-wrap: anywhere;
+    }
+
+    .compare {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 18px;
+      overflow: hidden;
+      border-radius: 8px;
+      font-size: clamp(13px, 1.2vw, 16px);
+      table-layout: fixed;
+    }
+
+    .compare th,
+    .compare td {
+      padding: clamp(9px, 1vw, 13px) clamp(10px, 1.1vw, 14px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: left;
+      color: #dce8f5;
+      overflow-wrap: anywhere;
+      vertical-align: top;
+    }
+
+    .compare th {
+      background: rgba(73, 167, 255, 0.16);
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .compare td {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .code {
+      white-space: pre-wrap;
+      padding: clamp(13px, 1.4vw, 18px);
+      border-radius: 8px;
+      background: #0b1116;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #c8f7dc;
+      font-family: Consolas, Monaco, monospace;
+      font-size: clamp(12px, 1.2vw, 16px);
+      line-height: 1.38;
+    }
+
+    .img-fit {
+      width: 100%;
+      height: auto;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .img-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .axis {
+      position: relative;
+      height: 240px;
+      margin-top: 28px;
+      border-left: 2px solid var(--line);
+      border-bottom: 2px solid var(--line);
+    }
+
+    .axis::before {
+      content: "效果上限";
+      position: absolute;
+      top: -24px;
+      left: -8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .axis::after {
+      content: "成本 / 工程复杂度";
+      position: absolute;
+      right: 0;
+      bottom: -30px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .point {
+      position: absolute;
+      width: 150px;
+      padding: 10px;
+      transform: translate(-50%, 50%);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      text-align: center;
+      font-weight: 800;
+    }
+
+    .footer {
+      position: absolute;
+      left: 58px;
+      right: 220px;
+      bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: rgba(220, 232, 245, 0.55);
+      font-size: 13px;
+      z-index: 2;
+    }
+
+    .progress {
+      width: 160px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--blue), var(--cyan));
+    }
+
+    .controls {
+      position: fixed;
+      right: 22px;
+      bottom: 18px;
+      z-index: 10;
+      display: flex;
+      gap: 8px;
+    }
+
+    .controls button {
+      width: 42px;
+      height: 38px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      background: rgba(13, 18, 23, 0.82);
+      color: var(--text);
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    ul.clean {
+      padding-left: 22px;
+      margin: 10px 0 0;
+    }
+
+    .split-title {
+      display: grid;
+      grid-template-columns: 0.82fr 1.18fr;
+      gap: 34px;
+      align-items: center;
+      height: 100%;
+    }
+
+    .chapter {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .chapter .kicker {
+      color: var(--cyan);
+      font-weight: 800;
+      margin-bottom: 18px;
+      font-size: 18px;
+    }
+
+    .ring {
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      border: 34px solid rgba(73, 167, 255, 0.22);
+      position: relative;
+      display: grid;
+      place-items: center;
+      margin: 0 auto;
+    }
+
+    .ring::before {
+      content: "";
+      position: absolute;
+      inset: 38px;
+      border-radius: 50%;
+      border: 28px solid rgba(55, 215, 208, 0.2);
+    }
+
+    .ring span {
+      position: relative;
+      z-index: 1;
+      font-size: 50px;
+      font-weight: 900;
+    }
+
+    .algo-diagram {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .algo-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .algo-row.three {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .algo-row.five {
+      grid-template-columns: repeat(5, 1fr);
+    }
+
+    .algo-box {
+      min-height: 96px;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.035));
+    }
+
+    .algo-box h3 {
+      margin-bottom: 6px;
+      font-size: clamp(16px, 1.35vw, 20px);
+    }
+
+    .algo-box p {
+      font-size: clamp(12px, 1.08vw, 15px);
+      line-height: 1.42;
+    }
+
+    .algo-box.blue {
+      border-color: rgba(73, 167, 255, 0.35);
+      background: rgba(73, 167, 255, 0.1);
+    }
+
+    .algo-box.cyan {
+      border-color: rgba(55, 215, 208, 0.35);
+      background: rgba(55, 215, 208, 0.09);
+    }
+
+    .algo-box.green {
+      border-color: rgba(107, 220, 143, 0.35);
+      background: rgba(107, 220, 143, 0.09);
+    }
+
+    .algo-box.yellow {
+      border-color: rgba(255, 209, 102, 0.35);
+      background: rgba(255, 209, 102, 0.1);
+    }
+
+    .algo-box.red {
+      border-color: rgba(255, 123, 123, 0.35);
+      background: rgba(255, 123, 123, 0.08);
+    }
+
+    .algo-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      color: var(--cyan);
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .algo-stack {
+      display: grid;
+      grid-template-columns: 1fr 0.16fr 1fr 0.16fr 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .algo-caption {
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px dashed rgba(255, 255, 255, 0.16);
+      color: #dce8f5;
+      font-size: clamp(13px, 1.15vw, 16px);
+      text-align: center;
+    }
+
+    @media (max-aspect-ratio: 16 / 9) {
+      .footer {
+        left: max(18px, calc((100vw - min(100vw, 177.78vh)) / 2 + 28px));
+        right: max(190px, calc((100vw - min(100vw, 177.78vh)) / 2 + 190px));
+      }
+    }
+
+    @media (max-height: 720px) {
+      .section-label {
+        margin-bottom: 10px;
+      }
+
+      .card {
+        min-height: auto;
+      }
+
+      .pipeline .step {
+        min-height: 136px;
+      }
+
+      .axis {
+        height: 210px;
+      }
+
+      .ring {
+        width: 270px;
+        height: 270px;
+        border-width: 28px;
+      }
+
+      .ring::before {
+        inset: 32px;
+        border-width: 23px;
+      }
+    }
+
+    @media print {
+      @page {
+        size: 13.333in 7.5in;
+        margin: 0;
+      }
+
+      html,
+      body {
+        width: 13.333in;
+        height: 7.5in;
+        margin: 0;
+        overflow: visible;
+        background: #101418;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .deck {
+        width: 13.333in;
+        height: auto;
+      }
+
+      .slide,
+      .slide.active {
+        display: flex;
+        flex-direction: column;
+        justify-content: safe center;
+        position: relative;
+        inset: auto;
+        transform: none;
+        width: 13.333in;
+        height: 7.5in;
+        padding: 0.5in 0.6in 0.44in;
+        page-break-after: always;
+        break-after: page;
+        box-shadow: none;
+        border: 0;
+      }
+
+      .slide.title-slide,
+      .slide.title-slide.active {
+        display: flex;
+      }
+
+      .slide:last-of-type {
+        page-break-after: auto;
+        break-after: auto;
+      }
+
+      .footer,
+      .controls {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" id="deck">
+    <section class="slide title-slide active">
+      <div class="section-label">Fine-Tuning Open Class</div>
+      <h1>大模型微调技术</h1>
+      <p class="lead" style="margin-top:24px">从 SFT、Prompt Tuning、LoRA 到强化学习对齐，理解后训练如何把通用模型变成可靠的任务专家。</p>
+      <div class="title-meta">
+        <span>Presenter: 王显宗</span>
+        <span>2026 年 6 月 3 日</span>
+        <span>90-120 分钟</span>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">Course Map</div>
+      <h2>本课的四条主线</h2>
+      <div class="grid-4" style="margin-top:28px">
+        <div class="card">
+          <div class="tag">基础必做</div>
+          <h3>SFT</h3>
+          <p>用指令-回答对训练模型，让它学会遵循任务、格式和表达风格。</p>
+        </div>
+        <div class="card">
+          <div class="tag">轻量切换</div>
+          <h3>Prompt Tuning</h3>
+          <p>冻结模型主体，只学习连续软提示向量，适合多任务快速切换。</p>
+        </div>
+        <div class="card">
+          <div class="tag">工业主流</div>
+          <h3>LoRA / QLoRA</h3>
+          <p>在权重矩阵内注入低秩适配器，以很低成本获得接近全量微调效果。</p>
+        </div>
+        <div class="card">
+          <div class="tag">推理增强</div>
+          <h3>RL / DPO / GRPO</h3>
+          <p>用偏好或可验证奖励优化策略，让模型不只模仿，还能探索更优解。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">LLM Architecture</div>
+      <h2>大模型的基本结构：Transformer</h2>
+      <div class="grid-2" style="align-items:center">
+        <div class="img-center">
+          <img class="img-fit" src="../homework/images/LLM-structure.jpg" alt="LLM Transformer Structure">
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <h3>Encoder（编码器）</h3>
+            <p>通过多头自注意力 + 前馈网络，将输入序列编码为上下文感知的隐藏表示。</p>
+          </div>
+          <div class="card" style="margin-bottom:14px">
+            <h3>Decoder（解码器）</h3>
+            <p>自回归生成输出，通过 Masked Self-Attention + Cross-Attention 逐步预测下一个 token。</p>
+          </div>
+          <div class="card">
+            <h3>核心组件</h3>
+            <p>Multi-Head Attention、Layer Norm、残差连接、Feed-Forward Network（FFN）——这些组件堆叠 N 层构成了现代大模型的骨架。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">Problem Introduction</div>
+      <h2>一个真实问题：大模型“不听话”</h2>
+      <div class="grid-2">
+        <div>
+          <div class="chat">
+            <div class="bubble user">请提取信息并仅输出 JSON：{"name":"...","age":...}</div>
+            <div class="bubble bad">好的，我为您提取了信息。姓名是张三，年龄是 25 岁。以下是 JSON：{"name":"张三","age":25} 希望对您有帮助！</div>
+          </div>
+        </div>
+        <div>
+          <div class="chat">
+            <div class="bubble user">使用 Python 实现快速排序，不要解释，只输出代码。</div>
+            <div class="bubble bad">快速排序是一种常用排序算法。它的基本思想是通过一趟排序将数据分隔成两部分...</div>
+          </div>
+        </div>
+      </div>
+      <p class="lead" style="margin-top:28px">模型有能力，但行为没有被约束到“你真正需要的输出形态”。微调解决的正是这种能力到行为之间的落差。</p>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">Why Fine-Tuning</div>
+      <h2>为什么会这样？</h2>
+      <div class="grid-3">
+        <div class="card">
+          <div class="big-number">01</div>
+          <h3>知识泛而不精</h3>
+          <p>预训练来自海量通用文本，覆盖广，但在法律、医疗、金融等垂直领域缺少精准任务经验。</p>
+        </div>
+        <div class="card">
+          <div class="big-number">02</div>
+          <h3>格式不受控</h3>
+          <p>预训练目标是下一个 token 预测，天然偏向自然语言续写，而不是严格 JSON、代码或 Schema。</p>
+        </div>
+        <div class="card">
+          <div class="big-number">03</div>
+          <h3>偏好未对齐</h3>
+          <p>互联网文本不是高质量指令数据，模型学到的是统计相关性，不等同于安全、有用、听指令。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">Definition</div>
+      <h2>什么是微调？</h2>
+      <p class="quote">微调是在预训练模型基础上，用少量高质量、特定任务或领域数据继续训练，使模型适配下游任务的过程。</p>
+      <div class="flow">
+        <div class="node">
+          <h3>少量高质量数据</h3>
+          <p>通常是几千到数百万条精心构造样本，质量远比数量更关键。</p>
+        </div>
+        <div class="arrow">→</div>
+        <div class="node">
+          <h3>特定任务目标</h3>
+          <p>学习指令遵循、输出格式、领域语气、工具使用或偏好排序。</p>
+        </div>
+        <div class="arrow">→</div>
+        <div class="node">
+          <h3>改变行为而非结构</h3>
+          <p>基础模型架构保持不变，重点调整参数或适配器带来的行为模式。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">Adaptation Options</div>
+      <h2>Prompt、RAG、微调：什么时候用谁？</h2>
+      <div class="axis">
+        <div class="point" style="left:17%;bottom:28%;border-color:rgba(107,220,143,.45)">Prompt 工程<br><span class="muted">低成本 / 低上限</span></div>
+        <div class="point" style="left:40%;bottom:48%;border-color:rgba(73,167,255,.45)">RAG<br><span class="muted">事实知识增强</span></div>
+        <div class="point" style="left:66%;bottom:68%;border-color:rgba(55,215,208,.45)">微调<br><span class="muted">行为深度改变</span></div>
+        <div class="point" style="left:87%;bottom:84%;border-color:rgba(255,209,102,.45)">全量微调<br><span class="muted">最高上限 / 高成本</span></div>
+      </div>
+      <p style="margin-top:42px">如果问题是“缺资料”，优先 RAG；如果问题是“行为模式不稳定”，微调更合适；如果只是简单任务，Prompt 工程常常足够。</p>
+    </section>
+
+    <section class="slide">
+      <div class="chapter">
+        <div class="kicker">Part 1</div>
+        <h1>SFT<br>监督微调</h1>
+        <p class="lead" style="margin-top:24px">最基础、最稳定、最常见的后训练起点：让模型模仿高质量标准答案。</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">SFT Core</div>
+      <h2>SFT 是什么？</h2>
+      <div class="grid-3">
+        <div class="card">
+          <h3>输入：Instruction</h3>
+          <p>明确的任务描述或问题，例如“请用 Python 实现快速排序”。</p>
+        </div>
+        <div class="card">
+          <h3>本质：Imitation Learning</h3>
+          <p>模型观察标准答案，学习表达风格、逻辑结构和回复格式。</p>
+        </div>
+        <div class="card">
+          <h3>目标：Response</h3>
+          <p>人类认可的高质量回复，是模型学习的金标准。</p>
+        </div>
+      </div>
+      <div class="formula">L<sub>SFT</sub> = - 1/N · Σ log P<sub>θ</sub>(y<sub>i</sub> | x, y<sub>&lt;i</sub>)</div>
+      <p>SFT 仍然使用语言模型的下一个 token 预测目标，只是训练样本变成了高质量指令数据。</p>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">SFT Sample</div>
+      <h2>一个具体的 SFT 样本</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="tag">USER / Instruction</div>
+          <p class="lead">请用 Python 实现一个快速排序算法。</p>
+        </div>
+        <div class="card">
+          <div class="tag">ASSISTANT / Response</div>
+          <pre class="code">def quick_sort(arr):
+    if len(arr) &lt;= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x &lt; pivot]
+    mid = [x for x in arr if x == pivot]
+    right = [x for x in arr if x &gt; pivot]
+    return quick_sort(left) + mid + quick_sort(right)</pre>
+        </div>
+      </div>
+      <p style="margin-top:20px">训练后，模型学到“实现代码”这类指令通常应直接返回代码，而不是先输出长篇算法解释。</p>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">Data Template</div>
+      <h2>SFT 数据格式：和推理模板一致</h2>
+      <pre class="code" style="font-size:18px">&lt;|system|&gt;你是一个有帮助的编程助手。&lt;|end|&gt;
+&lt;|user|&gt;用 Python 写一个快速排序。&lt;|end|&gt;
+&lt;|assistant|&gt;def quicksort(arr):
+    if len(arr) &lt;= 1:
+        return arr
+    ...
+&lt;|end|&gt;</pre>
+      <div class="grid-3" style="margin-top:18px">
+        <div class="card"><h3>Mask 策略</h3><p>通常只在 Assistant 回复部分计算损失。</p></div>
+        <div class="card"><h3>格式一致</h3><p>训练模板必须与推理时的 Chat Template 对齐。</p></div>
+        <div class="card"><h3>质量优先</h3><p>几千条高质量样本往往胜过大量低质量样本。</p></div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">SFT Iceberg</div>
+      <h2>SFT 的“冰山理论”</h2>
+      <div class="split-title">
+        <div class="ring"><span>SFT</span></div>
+        <div>
+          <div class="card">
+            <h3>水面以上：看得见的行为</h3>
+            <p>学习 JSON、Markdown、代码块等输出格式；学习语气、详略程度和角色扮演方式。</p>
+          </div>
+          <div class="card">
+            <h3>水面以下：激活已有知识</h3>
+            <p>SFT 主要不是注入全新知识，而是让模型在正确语境中调用预训练阶段已经学到的知识。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">SFT Limits</div>
+      <h2>SFT 的优势与局限</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>优势</h3>
+          <ul class="clean">
+            <li>简单直接：指令-回答对即可训练。</li>
+            <li>效果稳定：对格式、风格、任务遵循控制力强。</li>
+            <li>工程成熟：TRL、Deepspeed、LLaMA-Factory 等工具链完善。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>局限</h3>
+          <ul class="clean">
+            <li>高度依赖数据质量，Garbage In, Garbage Out。</li>
+            <li>容易过拟合，通常 1-3 个 epoch 即可。</li>
+            <li>本质是模仿，难以超越标注数据的能力上界。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="chapter">
+        <div class="kicker">Part 2</div>
+        <h1>Prompt Tuning<br>提示微调</h1>
+        <p class="lead" style="margin-top:24px">把人工写提示词，升级为可学习的连续向量。</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">Soft Prompt</div>
+      <h2>从离散提示到连续提示</h2>
+      <div class="flow">
+        <div class="node">
+          <h3>传统 Prompt</h3>
+          <p>“请按 JSON 格式输出：”</p>
+          <p class="muted">离散 token，靠人工试错。</p>
+        </div>
+        <div class="arrow">→</div>
+        <div class="node">
+          <h3>Soft Prompt</h3>
+          <p>[P1, P2, P3, Input Tokens]</p>
+          <p class="muted">连续向量，通过梯度下降自动优化。</p>
+        </div>
+        <div class="arrow">→</div>
+        <div class="node">
+          <h3>Frozen LLM</h3>
+          <p>模型主体参数冻结。</p>
+          <p class="muted">只训练少量提示向量。</p>
+        </div>
+      </div>
+      <p class="lead" style="margin-top:26px">核心价值：用极少参数在高维嵌入空间中搜索更有效的任务表示。</p>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">Prompt Methods</div>
+      <h2>三种主流软提示方法</h2>
+      <table class="compare">
+        <thead>
+          <tr><th>方法</th><th>插入位置</th><th>特点</th><th>适用场景</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Prompt Tuning</td><td>输入 Embedding 层</td><td>最轻量，仅拼接可学习向量</td><td>10B+ 大模型、多任务切换</td></tr>
+          <tr><td>Prefix Tuning</td><td>每层 Key / Value 前缀</td><td>直接影响 Attention KV 缓存</td><td>长文本生成、摘要任务</td></tr>
+          <tr><td>P-Tuning v2</td><td>每层输入端</td><td>深层 Prompt Tuning，表达力更强</td><td>结构化理解、NER、关系抽取</td></tr>
+        </tbody>
+      </table>
+      <div class="formula">Prompt Tuning = 冻结大模型 + 训练很小的任务向量</div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">Prompt Methods Comparison</div>
+      <h2>架构对比：插入位置决定控制力</h2>
+      <div class="img-center">
+        <img class="img-fit" src="../homework/images/prompt-tuning-comparison.svg" alt="三种提示微调方法架构对比">
+      </div>
+      <p style="margin-top:12px">核心区别：Prompt Tuning 只在输入端注入一次；Prefix Tuning 在每层 K/V 控制 Attention；P-Tuning v2 逐层传递任务信号。</p>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">Prompt Tuning Architecture</div>
+      <h2>多任务切换：提示微调的杀手锏</h2>
+      <div class="pipeline">
+        <div class="step">
+          <div class="num">Shared</div>
+          <h3>基础模型</h3>
+          <p>7B / 13B 模型只加载一份到 GPU。</p>
+        </div>
+        <div class="step">
+          <div class="num">Task A</div>
+          <h3>翻译 Prompt</h3>
+          <p>KB-MB 级向量文件。</p>
+        </div>
+        <div class="step">
+          <div class="num">Task B</div>
+          <h3>摘要 Prompt</h3>
+          <p>热切换，无需换模型。</p>
+        </div>
+        <div class="step">
+          <div class="num">Task C</div>
+          <h3>分类 Prompt</h3>
+          <p>多任务服务成本很低。</p>
+        </div>
+        <div class="step">
+          <div class="num">Output</div>
+          <h3>任务输出</h3>
+          <p>由软提示引导生成或分类。</p>
+        </div>
+      </div>
+      <p style="margin-top:24px">局限同样清晰：小模型效果差、收敛较慢、表达能力通常弱于 LoRA。</p>
+    </section>
+
+    <section class="slide">
+      <div class="chapter">
+        <div class="kicker">Part 3</div>
+        <h1>LoRA<br>低秩适配</h1>
+        <p class="lead" style="margin-top:24px">低成本微调的工业标准：只训练两个小矩阵，却能修正模型内部权重变化方向。</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">LoRA Motivation</div>
+      <h2>为什么需要 LoRA？</h2>
+      <div class="grid-3">
+        <div class="card">
+          <h3>显存需求爆炸</h3>
+          <p>全量微调不仅要存权重，还要存梯度和优化器状态，13B 模型常需 50GB+ 显存。</p>
+        </div>
+        <div class="card">
+          <h3>任务副本昂贵</h3>
+          <p>每个任务保存一份完整模型，存储与部署成本不可持续。</p>
+        </div>
+        <div class="card">
+          <h3>多数变化低维</h3>
+          <p>适配任务时真正需要改变的方向很少，可以用低秩矩阵近似权重更新。</p>
+        </div>
+      </div>
+      <p class="quote" style="margin-top:24px">LoRA 的核心假设：权重更新 ΔW 具有低本征秩，可以分解成两个小矩阵的乘积。</p>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">LoRA Formula</div>
+      <h2>核心数学：W = W₀ + BA</h2>
+      <div class="formula">h = W₀x + (α / r) · BAx</div>
+      <div class="matrix-demo">
+        <div class="matrix">W₀<br><span class="muted">d × d<br>冻结</span></div>
+        <div style="font-size:42px;text-align:center;color:var(--cyan)">+</div>
+        <div class="matrix small">B<br><span class="muted">d × r<br>可训练</span></div>
+        <div class="matrix small">A<br><span class="muted">r × d<br>可训练</span></div>
+      </div>
+      <div class="grid-3" style="margin-top:20px">
+        <div class="card compact"><h3>r ≪ d</h3><p>常用 r=4、8、16、32。</p></div>
+        <div class="card compact"><h3>参数骤降</h3><p>从 d×d 变为约 2×d×r。</p></div>
+        <div class="card compact"><h3>训练稳定</h3><p>常见初始化：A 随机，B 为 0，初始 ΔW=0。</p></div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">LoRA Training & Merge</div>
+      <h2>训练阶段与推理阶段</h2>
+      <div class="grid-2">
+        <div class="card" style="border-color:rgba(73,167,255,.36)">
+          <div class="tag">Training</div>
+          <h3>冻结 W₀，只训练 A/B</h3>
+          <ul class="clean">
+            <li>显存开销低，训练状态更稳定。</li>
+            <li>不破坏原模型的基础表达能力。</li>
+            <li>可为不同任务保存不同适配器。</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:rgba(55,215,208,.36)">
+          <div class="tag">Inference</div>
+          <h3>合并权重，零额外延迟</h3>
+          <ul class="clean">
+            <li>W = W₀ + (α/r)BA。</li>
+            <li>merge_and_unload 后等价于普通模型推理。</li>
+            <li>这是 LoRA 相对 Adapter 的重要优势。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">QLoRA</div>
+      <h2>QLoRA：把显存再压下去</h2>
+      <div class="grid-3">
+        <div class="card">
+          <h3>NF4 量化</h3>
+          <p>4-bit NormalFloat 利用权重近似正态分布的特性，降低量化损失。</p>
+        </div>
+        <div class="card">
+          <h3>双重量化</h3>
+          <p>对量化常数本身再量化，每参数额外节省约 0.4 bit。</p>
+        </div>
+        <div class="card">
+          <h3>分页优化器</h3>
+          <p>显存峰值溢出时把优化器状态迁移到 CPU 内存，降低 OOM 风险。</p>
+        </div>
+      </div>
+      <div class="formula">QLoRA = 4-bit 量化基础模型 + LoRA 适配器训练</div>
+      <p>实践上，QLoRA 让 RTX 3090/4090 等消费级 GPU 跑通 7B-13B 模型微调成为现实。</p>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">LoRA Practice</div>
+      <h2>实践配置：从可靠默认值开始</h2>
+      <table class="compare">
+        <thead>
+          <tr><th>配置项</th><th>推荐起点</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>rank r</td><td>8 或 16</td><td>r 越大表达力越强，但参数和显存增加。</td></tr>
+          <tr><td>alpha</td><td>2r</td><td>常见 alpha/r 约为 2，作为更新强度缩放。</td></tr>
+          <tr><td>target modules</td><td>q_proj + v_proj</td><td>最小配置；标准配置可加 o_proj、gate_proj。</td></tr>
+          <tr><td>dropout</td><td>0.05</td><td>小数据集上有助于缓解过拟合。</td></tr>
+          <tr><td>学习率</td><td>1e-4 到 2e-4</td><td>LoRA 常可使用高于全量 SFT 的学习率。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="slide">
+      <div class="chapter">
+        <div class="kicker">Part 4</div>
+        <h1>RL Alignment<br>强化学习对齐</h1>
+        <p class="lead" style="margin-top:24px">从“模仿答案”走向“优化策略”：偏好对齐与可验证奖励让模型探索更好的回答。</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">Why RL</div>
+      <h2>为什么 SFT 之后还需要 RL？</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>SFT 的根本局限</h3>
+          <ul class="clean">
+            <li>被动模仿人类示例，不理解目标函数。</li>
+            <li>无法稳定超越标注者水平。</li>
+            <li>缺少探索机制，难以发现更优解法。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>RL 的引入价值</h3>
+          <ul class="clean">
+            <li>通过尝试-反馈循环优化策略。</li>
+            <li>用奖励表达安全性、有用性、客观性等偏好。</li>
+            <li>数学与代码任务可用验证器提供自动奖励。</li>
+          </ul>
+        </div>
+      </div>
+      <p class="quote" style="margin-top:22px">SFT 是“学老师怎么做”；RL 是“自己试，做对了就强化”。</p>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">RL Basics</div>
+      <h2>LLM 里的强化学习概念</h2>
+      <table class="compare">
+        <thead>
+          <tr><th>RL 概念</th><th>符号</th><th>在大模型中的对应</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>状态 State</td><td>s<sub>t</sub></td><td>Prompt + 已生成 token 序列</td></tr>
+          <tr><td>动作 Action</td><td>a<sub>t</sub></td><td>选择下一个 token</td></tr>
+          <tr><td>策略 Policy</td><td>π<sub>θ</sub>(a|s)</td><td>LLM 输出的概率分布</td></tr>
+          <tr><td>奖励 Reward</td><td>r</td><td>奖励模型打分、人工偏好、单元测试或答案校验</td></tr>
+          <tr><td>价值 Value</td><td>V(s)</td><td>当前状态未来回报的估计</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">RLHF Pipeline</div>
+      <h2>RLHF：ChatGPT 时代的经典三阶段</h2>
+      <div class="pipeline" style="grid-template-columns:repeat(3, 1fr)">
+        <div class="step">
+          <div class="num">Stage 1</div>
+          <h3>SFT</h3>
+          <p>指令 + 人类编写标准答案，得到初始策略模型。</p>
+        </div>
+        <div class="step">
+          <div class="num">Stage 2</div>
+          <h3>Reward Model</h3>
+          <p>同一 prompt 的多个回复排序，学习人类偏好分数。</p>
+        </div>
+        <div class="step">
+          <div class="num">Stage 3</div>
+          <h3>PPO</h3>
+          <p>模型生成答案，奖励模型反馈，用策略梯度更新。</p>
+        </div>
+      </div>
+      <p style="margin-top:26px">瓶颈：需同时维护 Policy、Reference、Reward、Value 等模型，显存开销大，PPO 对超参数敏感。</p>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">PPO Structure</div>
+      <h2>PPO：带 KL 约束的在线策略优化</h2>
+      <div class="algo-diagram">
+        <div class="algo-stack">
+          <div class="algo-box blue">
+            <h3>Prompt</h3>
+            <p>采样训练问题，输入当前策略模型。</p>
+          </div>
+          <div class="algo-link">→</div>
+          <div class="algo-box cyan">
+            <h3>Policy π<sub>θ</sub></h3>
+            <p>生成回答，并记录 token 概率。</p>
+          </div>
+          <div class="algo-link">→</div>
+          <div class="algo-box green">
+            <h3>Reward Model</h3>
+            <p>对完整回答打分，形成优化目标。</p>
+          </div>
+        </div>
+        <div class="algo-stack">
+          <div class="algo-box yellow">
+            <h3>Reference π<sub>ref</sub></h3>
+            <p>提供 KL 惩罚，防止模型偏离太远。</p>
+          </div>
+          <div class="algo-link">+</div>
+          <div class="algo-box red">
+            <h3>Value / Critic</h3>
+            <p>估计回报，降低策略梯度方差。</p>
+          </div>
+          <div class="algo-link">→</div>
+          <div class="algo-box cyan">
+            <h3>PPO Update</h3>
+            <p>裁剪目标函数，小步更新策略模型。</p>
+          </div>
+        </div>
+        <div class="algo-caption">核心闭环：生成回答 → 奖励打分 → KL 约束 → Advantage 估计 → 更新 Policy。</div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">DPO</div>
+      <h2>DPO：直接偏好优化</h2>
+      <div class="grid-2" style="align-items:center">
+        <div>
+          <div class="algo-diagram">
+            <div class="algo-row three">
+              <div class="algo-box blue">
+                <h3>Prompt x</h3>
+                <p>同一个问题或指令。</p>
+              </div>
+              <div class="algo-box green">
+                <h3>Chosen y<sup>+</sup></h3>
+                <p>人类偏好的回答。</p>
+              </div>
+              <div class="algo-box red">
+                <h3>Rejected y<sup>-</sup></h3>
+                <p>相对较差的回答。</p>
+              </div>
+            </div>
+            <div class="algo-link">↓</div>
+            <div class="algo-stack">
+              <div class="algo-box cyan">
+                <h3>Policy π<sub>θ</sub></h3>
+                <p>拉高 chosen 的相对概率。</p>
+              </div>
+              <div class="algo-link">↔</div>
+              <div class="algo-box yellow">
+                <h3>Reference π<sub>ref</sub></h3>
+                <p>约束更新幅度，避免过度漂移。</p>
+              </div>
+              <div class="algo-link">→</div>
+              <div class="algo-box green">
+                <h3>DPO Loss</h3>
+                <p>把偏好学习写成监督损失。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <h3>去掉显式 RL</h3>
+            <p>不再单独训练 Reward Model，也不跑 PPO 在线采样。</p>
+          </div>
+          <div class="card" style="margin-bottom:14px">
+            <h3>直接吃偏好对</h3>
+            <p>训练数据就是 chosen / rejected，目标是扩大两者的 log-prob 差距。</p>
+          </div>
+          <div class="card">
+            <h3>稳定、便宜、易复现</h3>
+            <p>工程复杂度接近 SFT，是离线偏好对齐的常用默认方案。</p>
+          </div>
+        </div>
+      </div>
+      <div class="formula">增大好回答概率，降低坏回答概率，同时约束不要偏离参考模型太远。</div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">GRPO & RLVR</div>
+      <h2>GRPO：推理 RL 的关键路径</h2>
+      <div class="algo-diagram">
+        <div class="algo-stack">
+          <div class="algo-box blue">
+            <h3>Prompt</h3>
+            <p>数学、代码或可验证任务。</p>
+          </div>
+          <div class="algo-link">→</div>
+          <div class="algo-box cyan">
+            <h3>Group Sampling</h3>
+            <p>同一问题生成 K 个候选答案。</p>
+          </div>
+          <div class="algo-link">→</div>
+          <div class="algo-box green">
+            <h3>Verifier Reward</h3>
+            <p>答案校验、单元测试或规则函数打分。</p>
+          </div>
+        </div>
+        <div class="algo-stack">
+          <div class="algo-box yellow">
+            <h3>Group Baseline</h3>
+            <p>用组内平均奖励替代 Value Critic。</p>
+          </div>
+          <div class="algo-link">→</div>
+          <div class="algo-box green">
+            <h3>Relative Advantage</h3>
+            <p>高于组均值的样本被强化，低于组均值的样本被抑制。</p>
+          </div>
+          <div class="algo-link">→</div>
+          <div class="algo-box cyan">
+            <h3>Policy Update</h3>
+            <p>带 KL 约束更新，鼓励可验证的推理路径。</p>
+          </div>
+        </div>
+        <div class="algo-caption">关键差异：PPO 依赖 Critic 估值；GRPO 用同题多答案的相对表现估计优势。</div>
+      </div>
+      <p class="quote" style="margin-top:28px">GRPO / RLVR 的价值在于：奖励可以由验证器自动给出，模型能在没有人工推理轨迹标注的情况下发展出反思、验证和长链推理行为。</p>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">Alignment Methods</div>
+      <h2>对齐与推理方法对比</h2>
+      <table class="compare">
+        <thead>
+          <tr><th>方法</th><th>奖励来源</th><th>需奖励模型</th><th>需 Critic</th><th>核心场景</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>RLHF + PPO</td><td>人类偏好训练出的 RM</td><td>是</td><td>是</td><td>通用对话、安全与风格</td></tr>
+          <tr><td>DPO</td><td>偏好对中的隐式奖励</td><td>否</td><td>否</td><td>离线偏好对齐，稳定易训</td></tr>
+          <tr><td>GRPO</td><td>可验证规则 / 函数</td><td>否</td><td>否</td><td>数学、代码、逻辑推理</td></tr>
+          <tr><td>DAPO / RLVR</td><td>可验证奖励 + 长链优化</td><td>否</td><td>否</td><td>2025-2026 推理增强范式</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">Summary</div>
+      <h2>四类技术的核心定位</h2>
+      <div class="grid-2">
+        <div class="card compact"><h3>SFT</h3><p>激活已有知识，学习指令遵循与特定格式，是高级方法的起点。</p></div>
+        <div class="card compact"><h3>Prompt Tuning</h3><p>参数极少，多任务切换成本低，但表达能力通常弱于 LoRA。</p></div>
+        <div class="card compact"><h3>LoRA / QLoRA</h3><p>工业标准的参数高效微调，兼顾成本、效果和部署便利。</p></div>
+        <div class="card compact"><h3>DPO / GRPO / RLVR</h3><p>从偏好对齐到推理增强，用奖励信号推动模型超越模仿。</p></div>
+      </div>
+      <div class="formula">推荐管线：SFT → DPO / SimPO → GRPO / DAPO + 可验证奖励</div>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">Practice Advice</div>
+      <h2>给学生的实践路线</h2>
+      <div class="grid-3">
+        <div class="card">
+          <div class="tag">1-2 周入门</div>
+          <h3>跑通 QLoRA SFT</h3>
+          <p>跑通 LLaMA-Factory + Alpaca 或领域数据集，对比微调前后的指令遵循和格式稳定性。</p>
+        </div>
+        <div class="card">
+          <div class="tag">深入理解</div>
+          <h3>做消融实验</h3>
+          <p>对比 r=4/8/16/32、不同 target modules 和数据质量对效果的影响。</p>
+        </div>
+        <div class="card">
+          <div class="tag">进阶方向</div>
+          <h3>DPO 与 GRPO</h3>
+          <p>用偏好数据做 DPO；在数学或代码任务中尝试可验证奖励训练。</p>
+        </div>
+      </div>
+      <p style="margin-top:24px">工具推荐：LLaMA-Factory、Unsloth、HuggingFace PEFT、HuggingFace TRL。</p>
+    </section>
+
+    <section class="slide title-slide">
+      <div class="section-label">Q & A</div>
+      <h1>Q & A</h1>
+      <p class="lead" style="margin-top:24px">微调不是“让模型记住更多”，而是让模型更可靠地把已有能力用在正确的任务行为上。</p>
+      <div class="title-meta">
+        <span>Presenter: 王显宗</span>
+        <span>2026 年 6 月 3 日</span>
+      </div>
+    </section>
+  </main>
+
+  <div class="footer">
+    <span>大模型微调技术公开课</span>
+    <div class="progress"><span id="progress"></span></div>
+    <span id="pageNo">1 / 1</span>
+  </div>
+
+  <div class="controls" aria-label="slide controls">
+    <button type="button" id="prev" title="Previous slide">&lt;</button>
+    <button type="button" id="next" title="Next slide">&gt;</button>
+    <button type="button" id="print" title="Print / export PDF">P</button>
+  </div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const pageNo = document.getElementById("pageNo");
+    const progress = document.getElementById("progress");
+    let index = 0;
+
+    function showSlide(nextIndex) {
+      index = Math.max(0, Math.min(slides.length - 1, nextIndex));
+      slides.forEach((slide, i) => slide.classList.toggle("active", i === index));
+      pageNo.textContent = `${index + 1} / ${slides.length}`;
+      progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+      location.hash = `slide-${index + 1}`;
+    }
+
+    function fromHash() {
+      const match = location.hash.match(/slide-(\d+)/);
+      if (match) showSlide(Number(match[1]) - 1);
+    }
+
+    document.getElementById("prev").addEventListener("click", () => showSlide(index - 1));
+    document.getElementById("next").addEventListener("click", () => showSlide(index + 1));
+    document.getElementById("print").addEventListener("click", () => window.print());
+
+    document.addEventListener("keydown", (event) => {
+      if (["ArrowRight", "PageDown", " "].includes(event.key)) {
+        event.preventDefault();
+        showSlide(index + 1);
+      }
+      if (["ArrowLeft", "PageUp"].includes(event.key)) {
+        event.preventDefault();
+        showSlide(index - 1);
+      }
+      if (event.key === "Home") showSlide(0);
+      if (event.key === "End") showSlide(slides.length - 1);
+    });
+
+    window.addEventListener("hashchange", fromHash);
+    fromHash();
+    showSlide(index);
+  </script>
+</body>
+</html>
+
+
+
+
+

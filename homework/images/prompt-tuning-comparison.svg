@@ -1,0 +1,174 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif">
+  <defs>
+    <linearGradient id="layerGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e2d3d"/>
+      <stop offset="100%" stop-color="#182027"/>
+    </linearGradient>
+    <linearGradient id="trainGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff7b2d"/>
+      <stop offset="100%" stop-color="#ffad33"/>
+    </linearGradient>
+    <linearGradient id="frozenGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3a5068"/>
+      <stop offset="100%" stop-color="#2a3a4a"/>
+    </linearGradient>
+    <linearGradient id="inputGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2d5a3d"/>
+      <stop offset="100%" stop-color="#1a3a25"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f161c"/>
+      <stop offset="100%" stop-color="#141c24"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="960" height="520" rx="10" fill="url(#bgGrad)" stroke="#253545" stroke-width="1.5"/>
+
+  <!-- Title -->
+  <text x="480" y="32" text-anchor="middle" fill="#37d7d0" font-size="16" font-weight="bold">三种提示微调方法对比</text>
+
+  <!-- ======================== COLUMN 1: Prompt Tuning ======================== -->
+  <g transform="translate(20, 52)">
+    <text x="130" y="0" text-anchor="middle" fill="#ffd166" font-size="15" font-weight="bold">Prompt Tuning</text>
+    <text x="130" y="18" text-anchor="middle" fill="#a9b6c4" font-size="10">仅在输入层拼接</text>
+
+    <!-- Input tokens -->
+    <rect x="15" y="30" width="230" height="26" rx="4" fill="url(#inputGrad)" stroke="#4a8a5a" stroke-width="1"/>
+    <text x="130" y="47" text-anchor="middle" fill="#c8f7dc" font-size="11">Input Tokens</text>
+
+    <!-- Soft Prompt (trainable) at input -->
+    <rect x="15" y="62" width="230" height="26" rx="4" fill="url(#trainGrad)" stroke="#ff9f43" stroke-width="1.5" filter="url(#glow)"/>
+    <text x="130" y="79" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">⬆ Soft Prompts（可训练，~10K 参数）</text>
+
+    <!-- Arrow from soft prompt into layer 1 -->
+    <line x1="130" y1="88" x2="130" y2="104" stroke="#37d7d0" stroke-width="1.5" marker-end="url(#arrowCyan)"/>
+    <defs><marker id="arrowCyan" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#37d7d0"/></marker></defs>
+
+    <!-- Layer 1 (frozen) -->
+    <rect x="25" y="104" width="210" height="48" rx="5" fill="url(#frozenGrad)" stroke="#4a6a8a" stroke-width="1"/>
+    <text x="130" y="120" text-anchor="middle" fill="#dce8f5" font-size="11">Layer 1 — Self-Attention + FFN</text>
+    <text x="130" y="138" text-anchor="middle" fill="#8aa4c0" font-size="9">🔒 冻结</text>
+
+    <!-- Layer 2 (frozen) -->
+    <rect x="25" y="158" width="210" height="48" rx="5" fill="url(#frozenGrad)" stroke="#4a6a8a" stroke-width="1"/>
+    <text x="130" y="174" text-anchor="middle" fill="#dce8f5" font-size="11">Layer 2 — Self-Attention + FFN</text>
+    <text x="130" y="192" text-anchor="middle" fill="#8aa4c0" font-size="9">🔒 冻结</text>
+
+    <!-- Dots -->
+    <text x="130" y="222" text-anchor="middle" fill="#a9b6c4" font-size="14">⋮</text>
+
+    <!-- Layer N (frozen) -->
+    <rect x="25" y="234" width="210" height="48" rx="5" fill="url(#frozenGrad)" stroke="#4a6a8a" stroke-width="1"/>
+    <text x="130" y="250" text-anchor="middle" fill="#dce8f5" font-size="11">Layer N — Self-Attention + FFN</text>
+    <text x="130" y="268" text-anchor="middle" fill="#8aa4c0" font-size="9">🔒 冻结</text>
+
+    <!-- Output -->
+    <rect x="45" y="296" width="170" height="24" rx="4" fill="#1a3040" stroke="#344553" stroke-width="1"/>
+    <text x="130" y="313" text-anchor="middle" fill="#37d7d0" font-size="11">输出</text>
+
+    <!-- Legend box -->
+    <rect x="15" y="336" width="230" height="50" rx="5" fill="none" stroke="#253545" stroke-width="1"/>
+    <text x="130" y="354" text-anchor="middle" fill="#a9b6c4" font-size="9">可训参数 ≈ 0.01% · 仅 Embedding 层</text>
+    <text x="130" y="372" text-anchor="middle" fill="#6bdc8f" font-size="9">✅ 显存: ~8GB (7B) · 速度: 4.5x</text>
+  </g>
+
+  <!-- ======================== COLUMN 2: Prefix Tuning ======================== -->
+  <g transform="translate(335, 52)">
+    <text x="130" y="0" text-anchor="middle" fill="#ffd166" font-size="15" font-weight="bold">Prefix Tuning</text>
+    <text x="130" y="18" text-anchor="middle" fill="#a9b6c4" font-size="10">在每层 K/V 前拼接前缀</text>
+
+    <!-- Input tokens -->
+    <rect x="15" y="30" width="230" height="26" rx="4" fill="url(#inputGrad)" stroke="#4a8a5a" stroke-width="1"/>
+    <text x="130" y="47" text-anchor="middle" fill="#c8f7dc" font-size="11">Input Tokens</text>
+
+    <!-- Layer 1 with K/V prefix -->
+    <rect x="25" y="62" width="210" height="58" rx="5" fill="url(#frozenGrad)" stroke="#4a6a8a" stroke-width="1"/>
+    <rect x="25" y="62" width="210" height="18" rx="5" fill="url(#trainGrad)" filter="url(#glow)"/>
+    <text x="130" y="76" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">[Prefix_K₁, Prefix_V₁] 可训练</text>
+    <text x="130" y="100" text-anchor="middle" fill="#dce8f5" font-size="10">Layer 1 — Attention + FFN</text>
+    <text x="130" y="114" text-anchor="middle" fill="#8aa4c0" font-size="8">🔒 冻结</text>
+
+    <!-- Layer 2 with K/V prefix -->
+    <rect x="25" y="128" width="210" height="58" rx="5" fill="url(#frozenGrad)" stroke="#4a6a8a" stroke-width="1"/>
+    <rect x="25" y="128" width="210" height="18" rx="5" fill="url(#trainGrad)" filter="url(#glow)"/>
+    <text x="130" y="142" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">[Prefix_K₂, Prefix_V₂] 可训练</text>
+    <text x="130" y="166" text-anchor="middle" fill="#dce8f5" font-size="10">Layer 2 — Attention + FFN</text>
+    <text x="130" y="180" text-anchor="middle" fill="#8aa4c0" font-size="8">🔒 冻结</text>
+
+    <!-- Dots -->
+    <text x="130" y="202" text-anchor="middle" fill="#a9b6c4" font-size="14">⋮</text>
+
+    <!-- Layer N with K/V prefix -->
+    <rect x="25" y="214" width="210" height="58" rx="5" fill="url(#frozenGrad)" stroke="#4a6a8a" stroke-width="1"/>
+    <rect x="25" y="214" width="210" height="18" rx="5" fill="url(#trainGrad)" filter="url(#glow)"/>
+    <text x="130" y="228" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">[Prefix_Kₙ, Prefix_Vₙ] 可训练</text>
+    <text x="130" y="252" text-anchor="middle" fill="#dce8f5" font-size="10">Layer N — Attention + FFN</text>
+    <text x="130" y="266" text-anchor="middle" fill="#8aa4c0" font-size="8">🔒 冻结</text>
+
+    <!-- Output -->
+    <rect x="45" y="284" width="170" height="24" rx="4" fill="#1a3040" stroke="#344553" stroke-width="1"/>
+    <text x="130" y="301" text-anchor="middle" fill="#37d7d0" font-size="11">输出</text>
+
+    <!-- Legend box -->
+    <rect x="15" y="324" width="230" height="68" rx="5" fill="none" stroke="#253545" stroke-width="1"/>
+    <text x="130" y="342" text-anchor="middle" fill="#a9b6c4" font-size="9">可训参数 ≈ 0.001%</text>
+    <text x="130" y="358" text-anchor="middle" fill="#a9b6c4" font-size="9">在每层 K、V 前拼接前缀向量</text>
+    <text x="130" y="374" text-anchor="middle" fill="#a9b6c4" font-size="9">直接影响 Attention 计算</text>
+    <text x="130" y="388" text-anchor="middle" fill="#6bdc8f" font-size="9">✅ 显存: ~6GB · 速度: 6.8x</text>
+  </g>
+
+  <!-- ======================== COLUMN 3: P-Tuning v2 ======================== -->
+  <g transform="translate(650, 52)">
+    <text x="130" y="0" text-anchor="middle" fill="#ffd166" font-size="15" font-weight="bold">P-Tuning v2</text>
+    <text x="130" y="18" text-anchor="middle" fill="#a9b6c4" font-size="10">在每层输入端拼接</text>
+
+    <!-- Input tokens -->
+    <rect x="15" y="30" width="230" height="26" rx="4" fill="url(#inputGrad)" stroke="#4a8a5a" stroke-width="1"/>
+    <text x="130" y="47" text-anchor="middle" fill="#c8f7dc" font-size="11">Input Tokens + [Prompt₁]</text>
+
+    <!-- Layer 1 with input prompt -->
+    <rect x="25" y="62" width="210" height="58" rx="5" fill="url(#frozenGrad)" stroke="#4a6a8a" stroke-width="1"/>
+    <rect x="25" y="62" width="210" height="18" rx="5" fill="url(#trainGrad)" filter="url(#glow)"/>
+    <text x="130" y="76" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">[Prompt₁] 输入处可训练</text>
+    <text x="130" y="100" text-anchor="middle" fill="#dce8f5" font-size="10">Layer 1 — Attention + FFN</text>
+    <text x="130" y="114" text-anchor="middle" fill="#8aa4c0" font-size="8">🔒 冻结</text>
+
+    <!-- Layer 2 with input prompt -->
+    <rect x="25" y="128" width="210" height="58" rx="5" fill="url(#frozenGrad)" stroke="#4a6a8a" stroke-width="1"/>
+    <rect x="25" y="128" width="210" height="18" rx="5" fill="url(#trainGrad)" filter="url(#glow)"/>
+    <text x="130" y="142" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">[Prompt₂] 输入处可训练</text>
+    <text x="130" y="166" text-anchor="middle" fill="#dce8f5" font-size="10">Layer 2 — Attention + FFN</text>
+    <text x="130" y="180" text-anchor="middle" fill="#8aa4c0" font-size="8">🔒 冻结</text>
+
+    <!-- Dots -->
+    <text x="130" y="202" text-anchor="middle" fill="#a9b6c4" font-size="14">⋮</text>
+
+    <!-- Layer N with input prompt -->
+    <rect x="25" y="214" width="210" height="58" rx="5" fill="url(#frozenGrad)" stroke="#4a6a8a" stroke-width="1"/>
+    <rect x="25" y="214" width="210" height="18" rx="5" fill="url(#trainGrad)" filter="url(#glow)"/>
+    <text x="130" y="228" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">[Promptₙ] 输入处可训练</text>
+    <text x="130" y="252" text-anchor="middle" fill="#dce8f5" font-size="10">Layer N — Attention + FFN</text>
+    <text x="130" y="266" text-anchor="middle" fill="#8aa4c0" font-size="8">🔒 冻结</text>
+
+    <!-- Output -->
+    <rect x="45" y="284" width="170" height="24" rx="4" fill="#1a3040" stroke="#344553" stroke-width="1"/>
+    <text x="130" y="301" text-anchor="middle" fill="#37d7d0" font-size="11">输出</text>
+
+    <!-- Legend box -->
+    <rect x="15" y="324" width="230" height="68" rx="5" fill="none" stroke="#253545" stroke-width="1"/>
+    <text x="130" y="342" text-anchor="middle" fill="#a9b6c4" font-size="9">可训参数 ≈ 0.01%~0.1% (~1.2M)</text>
+    <text x="130" y="358" text-anchor="middle" fill="#a9b6c4" font-size="9">Deep Prompt — 逐层传递任务信号</text>
+    <text x="130" y="374" text-anchor="middle" fill="#a9b6c4" font-size="9">表达力最强，最接近全量微调</text>
+    <text x="130" y="388" text-anchor="middle" fill="#6bdc8f" font-size="9">✅ 显存: ~8GB · 速度: 4.5x</text>
+  </g>
+
+  <!-- Key insight bar at bottom -->
+  <rect x="20" y="470" width="920" height="36" rx="6" fill="rgba(55,215,208,0.08)" stroke="rgba(55,215,208,0.25)" stroke-width="1"/>
+  <text x="480" y="493" text-anchor="middle" fill="#37d7d0" font-size="12">
+    核心区别：Prompt Tuning 只在输入端一次注入 · Prefix Tuning 在每层 K/V 控制 Attention · P-Tuning v2 在每层输入逐层传递任务信号
+  </text>
+</svg>
