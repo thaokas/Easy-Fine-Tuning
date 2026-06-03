@@ -410,6 +410,20 @@
       border: 1px solid rgba(255, 255, 255, 0.12);
     }
 
+    .diagram-figure {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .diagram-figure .img-fit {
+      max-height: 560px;
+      background: rgba(255, 255, 255, 0.96);
+    }
+
     .img-center {
       display: flex;
       align-items: center;
@@ -1300,6 +1314,14 @@
     </section>
 
     <section class="slide">
+      <div class="section-label">PPO Diagram</div>
+      <h2>PPO 示意图</h2>
+      <div class="diagram-figure">
+        <img class="img-fit" src="image/PPO.png" alt="PPO 示意图">
+      </div>
+    </section>
+
+    <section class="slide">
       <div class="section-label">DPO</div>
       <h2>DPO：直接偏好优化</h2>
       <div class="grid-2" style="align-items:center">
@@ -1357,6 +1379,14 @@
     </section>
 
     <section class="slide">
+      <div class="section-label">DPO Diagram</div>
+      <h2>DPO 示意图</h2>
+      <div class="diagram-figure">
+        <img class="img-fit" src="image/DPO.png" alt="DPO 示意图">
+      </div>
+    </section>
+
+    <section class="slide">
       <div class="section-label">GRPO & RLVR</div>
       <h2>GRPO：推理 RL 的关键路径</h2>
       <div class="algo-diagram">
@@ -1395,6 +1425,14 @@
         <div class="algo-caption">关键差异：PPO 依赖 Critic 估值；GRPO 用同题多答案的相对表现估计优势。</div>
       </div>
       <p class="quote" style="margin-top:28px">GRPO / RLVR 的价值在于：奖励可以由验证器自动给出，模型能在没有人工推理轨迹标注的情况下发展出反思、验证和长链推理行为。</p>
+    </section>
+
+    <section class="slide">
+      <div class="section-label">GRPO Diagram</div>
+      <h2>GRPO 示意图</h2>
+      <div class="diagram-figure">
+        <img class="img-fit" src="image/GRPO.png" alt="GRPO 示意图">
+      </div>
     </section>
 
     <section class="slide">
@@ -1513,7 +1551,6 @@
   </script>
 </body>
 </html>
-
 
 
 
